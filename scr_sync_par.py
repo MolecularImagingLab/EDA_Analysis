@@ -8,8 +8,7 @@ import numpy as np
 import math
 
 def readin():
-# First argument is scr .txt file input, second argument is scr .txt file output
-# Third argument is .par file input, fourth argument is .par file output
+# First argument is scr .txt file input, second argument is .par file input, third argument is .par file output
     input_scr = sys.argv[1]
     input_par = sys.argv[2]
     output_par = sys.argv[3]
@@ -24,7 +23,7 @@ def scr_mod(input_scr):
     # View data
     # scr.plot.line(x='time', y=['microsiemens','ch1','ch2','ch3'])
     # Start at iloc of 0 defines the time @ first electrical impulse - start1
-    # start1 = (scr.loc[scr['ch2']==5, 'time'].iloc[0])
+    start1 = (scr.loc[scr['ch2']==5, 'time'].iloc[0])
     # Every 10-11th float aftwerwards denotes an electrical impulse - starts,  except where there are test shocks
     starts = list(scr.loc[scr['ch2']==5, 'time'])
     allstartsrounded = [round(num, 0) for num in starts]
@@ -79,7 +78,7 @@ def scr_mod(input_scr):
                 finalnumbers = []
     ends_list = [end1, end2, end3, end4]
     for z,i in enumerate([1,3,5,7]): # count, item
-        for l in starts:
+        for l in startstops:
             if math.isclose(finalstartstops[i], l, abs_tol = 1):
                 finalnumbers.append(l)
                 ends_list[z].append(finalnumbers[0])
@@ -123,4 +122,3 @@ def main():
 if __name__ == "__main__":
     # execute only if run as a script
     main()
-
