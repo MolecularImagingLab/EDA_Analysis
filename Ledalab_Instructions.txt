@@ -1,0 +1,4 @@
+# Ledalab instructions
+1. Go to Documents/ledalab-master in matlab, type ledalab in command line
+2. Import SCR .txt file (type 3 file in ledalab), enter SC data col=1, event marker col=3, enter sample HZ of 200
+3. Downsample to 50 HZ
