@@ -2,7 +2,7 @@
 #! /home/lauri/anaconda3/bin/python
 
 # Import libraries
-import os
+import os, sys
 import pandas as pd
 import numpy as np
 
@@ -11,16 +11,15 @@ def grab_scr(root, scrpath):
     subject_id = sys.argv[1]
     filefolder = os.path.join(root, subject_id, scrpath)
     print('Grabbing par files from:' + filefolder)
-    results = []
     files = os.listdir(filefolder)
     for f in files:
         if f.endswith('.txt'):
-            results.append(f)
+            results = f
     return results, subject_id
 
-def assign_time(results):
+def assign_time(root, subject_id, scrpath, results):
     ''' Adds time variable based on sampling rate of 200 Hz. '''
-    scr = pd.read_table(results, header=0, names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True)
+    scr = pd.read_table(os.path.join(root,subject_id,scrpath,results), header=0, names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True)
     scr = scr.assign(time=[0 + (0.005)*i for i in range(len(scr))])[['time'] + scr.columns.tolist()]
     scr.time = scr.time.round()
     return scr
@@ -34,7 +33,7 @@ def extract_markers(scr):
     # Get CS+US pairings
     csps = (scr.loc[scr['csps']==5, 'time']).to_numpy(dtype='int64')
     # Get unique values only
-    csps_u = np.unique(csu)
+    csps_u = np.unique(csps)
     # Get CS plus
     csp = (scr.loc[scr['csp']==5, 'time']).to_numpy(dtype='int64')
     # Get unique values only
@@ -68,7 +67,7 @@ def main():
     parpath = 'par'
     # Execute functions
     results, subject_id = grab_scr(root, scrpath)
-    scr = assign_time(results)
+    scr = assign_time(root, subject_id, scrpath, results)
     markers = extract_markers(scr)
     ledalab_form(markers, root, parpath, subject_id)
     print('Synced par file saved.')
