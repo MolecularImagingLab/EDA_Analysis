@@ -21,7 +21,6 @@ def assign_time(root, subject_id, scrpath, results):
     ''' Adds time variable based on sampling rate of 200 Hz. '''
     scr = pd.read_table(os.path.join(root,subject_id,scrpath,results), header=0, names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True)
     scr = scr.assign(time=[0 + (0.005)*i for i in range(len(scr))])[['time'] + scr.columns.tolist()]
-    scr.time = scr.time.round()
     return scr
 
 def extract_markers(scr):
