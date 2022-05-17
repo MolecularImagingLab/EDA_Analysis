@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-#! /home/lauri/anaconda3/bin/python
+#!/group/tuominen/anaconda3/bin/python
 
 # Import libraries
 import os, sys
@@ -23,6 +22,18 @@ def assign_time(root, subject_id, scrpath, results):
     scr = scr.assign(time=[0 + (0.005)*i for i in range(len(scr))])[['time'] + scr.columns.tolist()]
     return scr
 
+def filter_closeby(cs):
+    # Should be 8 start/stops, 24 csps, 56 csp and 56 csm
+    print('unique numbers before filter:', len(cs))
+    threshold = 4
+    diff = np.empty(cs.shape)
+    diff[0] = np.inf
+    diff[1:] = np.diff(cs)
+    mask = diff > threshold
+    cs = cs[mask]
+    print('unique numbers after filter:', len(cs))
+    return cs
+
 def extract_markers(scr):
     ''' Extracts time for each marker type. '''
     # Get starts and stops into list
@@ -39,17 +50,29 @@ def extract_markers(scr):
     csp_u = np.unique(csp)
     # Get CS minus
     csm = (scr.loc[scr['csm']==5, 'time']).to_numpy(dtype='int64')
-    # Get unique values only - delete first csm from every run
+    # Get unique values only
     csm_u = np.unique(csm)
-    csm_u = np.delete(csm_u, [0,14,28,42])
+    # Filter close numbers
+    print('--Starts & Stops--')
+    stst_uf = filter_closeby(stst_u)
+    print('--CSPS--')
+    csps_uf = filter_closeby(csps_u)
+    print('--CSP--')
+    csp_uf = filter_closeby(csp_u)
+    print('--CSM--')
+    csm_uf = filter_closeby(csm_u)
+    # Delete first csm from every run
+    csm_uf = np.delete(csm_uf, [0,14,28,42])
+    print('unique numbers after deletion:', len(csm_uf))
+    # Order all events in a list
     markers = []
-    for num in stst_u:
+    for num in stst_uf:
         markers.append([num,0])
-    for num in csps_u:
+    for num in csps_uf:
         markers.append([num,3])
-    for num in csp_u:
+    for num in csp_uf:
         markers.append([num,1])
-    for num in csm_u:
+    for num in csm_uf:
         markers.append([num,2])
     return markers
 
