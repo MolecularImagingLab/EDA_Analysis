@@ -1,107 +1,143 @@
-#!/usr/bin/env python
+#!/group/tuominen/anaconda3/bin/python
 
+# Import libraries
+import glob, os
 import pandas as pd
 import numpy as np
-sub1 = pd.read_csv('/home/rami/Documents/scr_all/AVL-001_era.txt', delim_whitespace = True)
-sub2 = pd.read_csv('/home/rami/Documents/scr_all/AVL-003_era.txt', delim_whitespace = True)
-sub3 = pd.read_csv('/home/rami/Documents/scr_all/AVL-004_era.txt', delim_whitespace = True)
-sub4 = pd.read_csv('/home/rami/Documents/scr_all/AVL-006_era.txt', delim_whitespace = True)
-sub5 = pd.read_csv('/home/rami/Documents/scr_all/AVL-007_era.txt', delim_whitespace = True)
-sub6 = pd.read_csv('/home/rami/Documents/scr_all/AVL-011_era.txt', delim_whitespace = True)
-sub7 = pd.read_csv('/home/rami/Documents/scr_all/AVL-101_era.txt', delim_whitespace = True)
-sub8 = pd.read_csv('/home/rami/Documents/scr_all/AVL-102_era.txt', delim_whitespace = True)
-sub9 = pd.read_csv('/home/rami/Documents/scr_all/AVL-105_era.txt', delim_whitespace = True)
-subs = [sub1, sub2, sub3, sub4, sub5, sub6, sub7, sub8, sub9]
-
-csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps = ([] for i in range(0,6))
-for sub in subs:
-    csm = sub.loc[sub['Event.NID']==2, 'CDA.ISCR'].to_list()
-    ev_n = sub.loc[sub['Event.NID']==2, 'Event.Nr'].to_list()
-    csm_all.append(csm)
-    ev_n_csm.append(ev_n)
-    csp = sub.loc[sub['Event.NID']==1, 'CDA.ISCR'].to_list()
-    ev_n = sub.loc[sub['Event.NID']==1, 'Event.Nr'].to_list()
-    csp_all.append(csp)
-    ev_n_csp.append(ev_n)
-    csps = sub.loc[sub['Event.NID']==3, 'CDA.ISCR'].to_list()
-    ev_n = sub.loc[sub['Event.NID']==3, 'Event.Nr'].to_list()
-    csps_all.append(csps)
-    ev_n_csps.append(ev_n)
-
-# By Event, run 1: 0:14, run 2: 14:28, run 3: 28:42, run 4: 42:56
-#CSP
-csp_df = pd.DataFrame(data=csp_all).T
-agg_csp = csp_df.assign(Event=[1 + (1)*i for i in range(len(csp_df))])[['Event'] + csp_df.columns.tolist()]
-agg_csp.columns = ['Event', 'sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9']
-csp_melt = pd.melt(agg_csp[28:42], id_vars='Event', var_name='Subject', value_vars=['sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9'], value_name='SCR')
-
-#CSM
-csm_df = pd.DataFrame(data=csm_all).T
-agg_csm = csm_df.assign(Event=[1 + (1)*i for i in range(len(csm_df))])[['Event'] + csm_df.columns.tolist()]
-agg_csm.columns = ['Event', 'sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9']
-csm_melt = pd.melt(agg_csm[28:42], id_vars='Event', var_name='Subject', value_vars=['sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9'], value_name='SCR')
-
-#CSPS
-csps_df = pd.DataFrame(data=csps_all).T
-agg_csps = csps_df.assign(Event=[1 + (1)*i for i in range(len(csps_df))])[['Event'] + csm_df.columns.tolist()]
-agg_csps.columns = ['Event', 'sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9']
-csps_melt = pd.melt(agg_csps[6:11], id_vars='Event', var_name='Subject', value_vars=['sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9'], value_name='SCR')
-
-#CONTRAST
-cs_contrast = csp_df - csm_df
-agg_contrast = cs_contrast.assign(Event=[1 + (1)*i for i in range(len(cs_contrast))])[['Event'] + cs_contrast.columns.tolist()]
-agg_contrast.columns = ['Event', 'sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9']
-contrast_melt_half1 = pd.melt(agg_contrast[28:35], id_vars='Event', var_name='Subject', value_vars=['sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9'], value_name='SCR')
-contrast_melt_half2 = pd.melt(agg_contrast[35:42], id_vars='Event', var_name='Subject', value_vars=['sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7', 'sub8', 'sub9'], value_name='SCR')
-#6 CSPS, #14 CSP, #14 CSM
-
 import matplotlib.pyplot as plt
 from matplotlib import rc
 import seaborn as sns
-# agg_csp.iloc[0:13].plot(x='event', y='csp')
-# agg_csm.iloc[0:13].plot(x='event', y='csm')
-# agg_contrast.iloc[0:13].plot(x='Event', y='CS+ versus CS-\n Skin Conductance Recordings (uSiemens)')
-fig, ax = plt.subplots(2,2, figsize=(20,14), gridspec_kw={
-                           'width_ratios': [5, 1],
-                         'height_ratios': [2, 2]})
 
-ax[0,0].tick_params(width=4, length=10, labelsize=28, bottom=False, pad=15)
-ax[1,0].tick_params(width=4, length=10, labelsize=28, bottom=False, pad=15)
-ax[0,1].tick_params(width=4, length=10, labelsize=28, bottom=False, pad=15)
-ax[1,1].tick_params(width=4, length=10, labelsize=28, bottom=False, pad=15)
-sns.set_style("ticks")
-# CSP
-sns.barplot(data=csp_melt, x='Event', y='SCR', edgecolor='black', linewidth=3, ax=ax[0,0], ci=95, capsize=0.4, color='firebrick')
-#sns.swarmplot(data=csp_melt, x='Event', y='SCR', edgecolor='black', linewidth=1.5, ax=ax[0], size=6)
-ax[0,0].set_ylabel('CS+ (uSiemens)' ,fontsize=30)
-ax[0,0].set_xlabel('Event #' ,fontsize=30)
-# CSM
-sns.barplot(data=csm_melt, x='Event', y='SCR', edgecolor='black', linewidth=3, ax=ax[1,0], ci=95, capsize=0.4, color='cornflowerblue')
-ax[1,0].set_ylabel('CS- (uSiemens)',fontsize=30)
-ax[1,0].set_xlabel('Event #' ,fontsize=30)
-# CS CONTRAST FIRST HALF
-sns.barplot(data=contrast_melt_half1, y='SCR', edgecolor='black', linewidth=3, ax=ax[0,1], ci=95, capsize=0.4, color='slateblue')
-ax[0,1].set_ylabel('CS contrast (uSiemens)',fontsize=30)
-ax[0,1].set_xlabel('Events 1-7' ,fontsize=30)
-# CS CONTRAST SECOND HALF
-sns.barplot(data=contrast_melt_half2, y='SCR', edgecolor='black', linewidth=3, ax=ax[1,1], ci=95, capsize=0.4, color='slateblue')
-ax[1,1].set_ylabel('CS contrast (uSiemens)',fontsize=30)
-ax[1,1].set_xlabel('Events 8-14' ,fontsize=30)
-ax[0,0].spines['left'].set_linewidth(4)
-ax[0,1].spines['left'].set_linewidth(4)
-ax[1,0].spines['left'].set_linewidth(4)
-ax[1,1].spines['left'].set_linewidth(4)
-fig.suptitle('Skin Conductance Recordings (N=9)',fontsize=34, fontweight='bold')
-sns.despine(bottom=True)
-plt.tight_layout(pad=4)
-plt.savefig('/home/rami/Downloads/run4_descriptive.jpg', dpi=300)
-# CSPS
-rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern Sans serif']})
-fig, ax = plt.subplots()
-sns.set_style("ticks")
-sns.set(font_scale=1.5)
-sns.barplot(data=csps_melt, x='Event', y='SCR', edgecolor='black', linewidth=3, ax=ax, ci=95, capsize=0.4, color='firebrick')
-#sns.swarmplot(data=csp_melt, x='Event', y='SCR', edgecolor='black', linewidth=1.5, ax=ax[0], size=6)
-ax.set_ylabel('CS+Shock (uSiemens)' ,fontsize=18)
-ax.title.set_text('CS+Shock by event #')
-plt.savefig('/home/lauri/Downloads/run1_csps.jpg', dpi=300)
+def import_scr(root, exclude):
+    path = root
+    all_files = glob.glob(os.path.join(path, "*era.txt"))
+    # Remove those not included in analysis
+    exclude = exclude
+    all_filesf = [f for f in all_files if exclude not in f]
+    print('Number of subjects:', len(all_filesf))
+    # Read in files
+    dfs = []
+    for file in all_filesf:
+        dfs.append(pd.read_csv(file, delim_whitespace=True))
+    return dfs
+
+def extract_scr(dfs, var):
+    #CDA.PhasicMax equal to maximum value of phasic activity [muS]
+    #CDA.ISCR equal to area (time window * SCR) [muS * s]
+    #CDA.SCR equal to average SCR [muS]
+    csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps = ([] for i in range(0,6))
+    for sub in dfs:
+        csm = sub.loc[sub['Event.NID']==2, var].to_list()
+        ev_n = sub.loc[sub['Event.NID']==2, 'Event.Nr'].to_list()
+        csm_all.append(csm)
+        ev_n_csm.append(ev_n)
+        csp = sub.loc[sub['Event.NID']==1, var].to_list()
+        ev_n = sub.loc[sub['Event.NID']==1, 'Event.Nr'].to_list()
+        csp_all.append(csp)
+        ev_n_csp.append(ev_n)
+        csps = sub.loc[sub['Event.NID']==3, var].to_list()
+        ev_n = sub.loc[sub['Event.NID']==3, 'Event.Nr'].to_list()
+        csps_all.append(csps)
+        ev_n_csps.append(ev_n)
+        return csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps
+
+def process_scr(sm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps):
+    # By Event, run 1: 0:14, run 2: 14:28, run 3: 28:42, run 4: 42:56
+    #6 CSPS, #14 CSP, #14 CSM
+    # Create column names
+
+    columns = [f[-15:-8] for f in all_files]
+    columns.insert(0, 'Event')
+
+    #CSP
+    csp_df = pd.DataFrame(data=csp_all).T
+    csp_df = csp_df.iloc[0:56,:]
+    agg_csp = csp_df.assign(Event=[1 + (1)*i for i in range(len(csp_df))])[['Event'] + csp_df.columns.tolist()]
+    agg_csp.columns = columns
+    agg_csp['Marker'] = 'CSp'
+    agg_csp['Run'] = 0
+    for ev in agg_csp.index:
+        if int(ev) in range(0,14):
+            agg_csp.iloc[ev, -1] = 1
+        elif int(ev) in range(14,28):
+            agg_csp.iloc[ev, -1] = 2
+        elif int(ev) in range(28,42):
+            agg_csp.iloc[ev, -1] = 3
+        elif int(ev) in range(42,56):
+            agg_csp.iloc[ev, -1] = 4
+
+    #CSM
+    csm_df = pd.DataFrame(data=csm_all).T
+    csm_df = csm_df.iloc[0:56,:]
+    agg_csm = csm_df.assign(Event=[1 + (1)*i for i in range(len(csm_df))])[['Event'] + csm_df.columns.tolist()]
+    agg_csm.columns = columns
+    agg_csm['Marker'] = 'CSm'
+    agg_csm['Run'] = 0
+    for ev in agg_csm.index:
+        if int(ev) in range(0,14):
+            agg_csm.iloc[ev, -1] = 1
+        elif int(ev) in range(14,28):
+            agg_csm.iloc[ev, -1] = 2
+        elif int(ev) in range(28,42):
+            agg_csm.iloc[ev, -1] = 3
+        elif int(ev) in range(42,56):
+            agg_csm.iloc[ev, -1] = 4
+
+    #CSPS
+    csps_df = pd.DataFrame(data=csps_all).T
+    csps_df = csps_df.iloc[0:24,:]
+    agg_csps = csps_df.assign(Event=[1 + (1)*i for i in range(len(csps_df))])[['Event'] + csm_df.columns.tolist()]
+    agg_csps.columns = columns
+    agg_csps['Marker'] = 'CSps'
+    agg_csps['Run'] = 0
+    for ev in agg_csps.index:
+        if int(ev) in range(0,6):
+            agg_csps.iloc[ev, -1] = 1
+        elif int(ev) in range(6,12):
+            agg_csps.iloc[ev, -1] = 2
+        elif int(ev) in range(12,18):
+            agg_csps.iloc[ev, -1] = 3
+        elif int(ev) in range(18,24):
+            agg_csps.iloc[ev, -1] = 4
+
+    #ALL
+    all_stims = pd.concat([agg_csp, agg_csm], axis=0)
+    allmelt = pd.melt(all_stims, id_vars=['Run','Event','Marker'], var_name='Subject', value_vars=[sub for sub in columns[1:]], value_name='SCR')
+    return allmelt
+
+def plot_scr(allmelt, dpath):
+    # Figure size
+    fig, ax = plt.subplots(1,4, figsize=(20,5))
+    # Barplot colours
+    # Tick params
+    sns.set_style("ticks")
+    # Plot
+    for i, r in enumerate([[1,8], [2,22], [3,36], [4,50]]):
+        sns.pointplot(data=allmelt.loc[(allmelt['Run'] == r[0])], x='Marker', y='SCR', edgecolor='black', linewidth=3,
+        ax=ax[i], ci=95, capsize=0.2, palette='Set1', join=False)
+        ax[i].set_ylabel('' ,fontsize=24)
+        ax[i].set_xlabel('Run {}'.format(r[0]) ,fontsize=24)
+        ax[i].set_xticklabels(['CS-', 'CS+'])
+        # Spine settings
+        ax[i].tick_params(width=3, length=10, labelsize=20, bottom=False, pad=15)
+        ax[i].spines['left'].set_linewidth(3)
+    ax[0].set_ylabel('Average phasic \npeak activity [muS]' ,fontsize=24)
+    sns.despine(bottom=True)
+    plt.tight_layout()
+    plt.savefig(os.path.join(dpath, 'scr_byrun.jpg'), dpi=300)
+
+def main():
+    # Hardcoded file path to existing BIDS dataset
+    root = '/Users/ramihamati/Documents/PhD_Work/AVL/SCR/syncedpars'
+    dpath = '/Users/ramihamati/Downloads'
+    exclude = 'AVL-001'
+    # select variable of interest
+    var = 'CDA.PhasicMax'
+    # Execute functions
+    dfs = import_scr(root, exclude)
+    csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps = extract_scr(dfs, var)
+    allmelt = process_scr(sm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps)
+    plot_scr(allmelt, dpath)
+if __name__ == "__main__":
+# execute only if run as a script
+    main()
