@@ -1,14 +1,13 @@
-#!/group/tuominen/anaconda3/bin/python
-
 # Import libraries
 import os, sys
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 def grab_scr(root, scrpath):
     ''' Grab scr files for specific subject. '''
     subject_id = sys.argv[1]
-    filefolder = os.path.join(root, subject_id, scrpath)
+    filefolder = os.path.join(root, scrpath, subject_id)
     print('Grabbing par files from:' + filefolder)
     files = os.listdir(filefolder)
     for f in files:
@@ -18,7 +17,8 @@ def grab_scr(root, scrpath):
 
 def assign_time(root, subject_id, scrpath, results):
     ''' Adds time variable based on sampling rate of 200 Hz. '''
-    scr = pd.read_table(os.path.join(root,subject_id,scrpath,results), header=0, names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True)
+    scr = pd.read_table(os.path.join(root,scrpath,subject_id,results), header=0,
+    names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True, encoding=None)
     scr = scr.assign(time=[0 + (0.005)*i for i in range(len(scr))])[['time'] + scr.columns.tolist()]
     return scr
 
@@ -74,25 +74,52 @@ def extract_markers(scr):
         markers.append([num,1])
     for num in csm_uf:
         markers.append([num,2])
-    return markers
+    return markers, csps_uf, csp_uf, csm_uf
 
 def ledalab_form(markers, root, parpath, subject_id):
     ''' Saves marker info in Ledalab friendly format. '''
     newpar = pd.DataFrame(markers, columns=['time','nid'])
     newpar.sort_values(by='time', inplace=True, ignore_index=True)
-    newpar.to_csv(os.path.join(root,subject_id,parpath,subject_id+'.synced.par'), index=False, header = True, sep='\t')
+    newpar.to_csv(os.path.join(root,parpath,subject_id+'.synced.par'), index=False, header = True, sep='\t')
+
+def concat_scr(scr, iti, ti, cs):
+    concat = []
+    for c in cs[0:13]:
+        concat.append((scr.loc[(scr['time'] >= c) & (scr['time'] <= c+ti), 'microsiemens'] - ( scr.loc[(scr['time'] >= c - iti) & (scr['time'] <= c), 'microsiemens'].agg('mean') ) ).tolist())
+    con = pd.DataFrame(concat).mean()
+    return con
+
+def plot_eventavg(scr, cs):
+    iti=2
+    t=[4,5,6,7,8,9,10]
+    fig, axes=plt.subplots(1,7,figsize=(20,4))
+    for i, ti in enumerate(t):
+        con = concat_scr(scr, iti, ti, cs)
+        length = len(con)
+        arr = np.arange(start = 0, stop = ti, step = ti/(length))
+        try:
+            axes[i].plot(arr, con)
+        except:
+            axes[i].plot(arr[:-1], con)
+        axes[i].title.set_text(f'{ti} seconds from cs')
+    return fig
 
 def main():
     # Hardcoded file path
-    root = '/group/tuominen/EmoSal/subjects'
-    scrpath = 'scr'
-    parpath = 'par'
+    root = '/Users/ramihamati/Documents/PhD_Work/AVL'
+    scrpath = 'SCR/SCR_JUNE2021'
+    parpath = 'SCR/syncedpars'
     # Execute functions
     results, subject_id = grab_scr(root, scrpath)
     scr = assign_time(root, subject_id, scrpath, results)
-    markers = extract_markers(scr)
+    markers, csps, csp, csm = extract_markers(scr)
     ledalab_form(markers, root, parpath, subject_id)
     print('Synced par file saved.')
+    dict = {'csps':csps, 'csp':csp, 'csm':csm}
+    for cs in dict.keys():
+        fig = plot_eventavg(scr, dict[cs])
+        fig.savefig(os.path.join(root,parpath,subject_id+f'.eventavg.{cs}.jpg'), dpi=300)
+    print('Event avgs saved.')
 if __name__ == "__main__":
     # execute only if run as a script
     main()
