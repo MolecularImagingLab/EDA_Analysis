@@ -89,7 +89,7 @@ def concat_scr(scr, iti, ti, cs):
     con = pd.DataFrame(concat).mean()
     return con
 
-def plot_eventavg(scr, cs):
+def plot_eventavg(scr, name, cs):
     iti=2
     t=[4,5,6,7,8,9,10]
     fig, axes=plt.subplots(1,7,figsize=(20,4))
@@ -101,7 +101,7 @@ def plot_eventavg(scr, cs):
             axes[i].plot(arr, con)
         except:
             axes[i].plot(arr[:-1], con)
-        axes[i].title.set_text(f'{ti} seconds from cs')
+        axes[i].title.set_text(f'{ti} seconds from {name}')
     return fig
 
 def main():
@@ -117,7 +117,7 @@ def main():
     print('Synced par file saved.')
     dict = {'csps':csps, 'csp':csp, 'csm':csm}
     for cs in dict.keys():
-        fig = plot_eventavg(scr, dict[cs])
+        fig = plot_eventavg(scr, cs, dict[cs])
         fig.savefig(os.path.join(root,parpath,subject_id+f'.eventavg.{cs}.jpg'), dpi=300)
     print('Event avgs saved.')
 if __name__ == "__main__":
