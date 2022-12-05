@@ -1,3 +1,4 @@
+#!/opt/anaconda3/bin/python
 # Import libraries
 import os, sys
 import pandas as pd
@@ -10,6 +11,7 @@ def grab_scr(root, scrpath):
     filefolder = os.path.join(root, scrpath, subject_id)
     print('Grabbing par files from:' + filefolder)
     files = os.listdir(filefolder)
+    files = [f for f in files if 'era' not in f]
     for f in files:
         if f.endswith('.txt'):
             results = f
@@ -31,7 +33,12 @@ def filter_closeby(cs):
     diff[1:] = np.diff(cs)
     mask = diff > threshold
     cs = cs[mask]
-    print('unique numbers after filter:', len(cs))
+    print('unique numbers after closeby filter:', len(cs))
+    return cs
+
+def filter_stst(stst_uf, cs):
+    cs = np.asarray([c for c in cs if c not in stst_uf], dtype='int64')
+    print('unique numbers after start/stop deletion ***: \n{}'.format(cs), len(cs))
     return cs
 
 def extract_markers(scr):
@@ -55,15 +62,19 @@ def extract_markers(scr):
     # Filter close numbers
     print('--Starts & Stops--')
     stst_uf = filter_closeby(stst_u)
+    # Filter close numbers and starts/stops
     print('--CSPS--')
     csps_uf = filter_closeby(csps_u)
+    csps_uf = filter_stst(stst_uf, csps_uf)
     print('--CSP--')
     csp_uf = filter_closeby(csp_u)
+    csp_uf = filter_stst(stst_uf, csp_uf)
     print('--CSM--')
     csm_uf = filter_closeby(csm_u)
-    # Delete first csm from every run
-    csm_uf = np.delete(csm_uf, [0,14,28,42])
-    print('unique numbers after deletion:', len(csm_uf))
+    csm_uf = filter_stst(stst_uf, csm_uf)
+    # Delete faulty csm - first csm of every run
+    csm_uf = np.delete(csm_uf, [0,15,30,45])
+    print('unique numbers after faulty CSM deletion *****:', len(csm_uf))
     # Order all events in a list
     markers = []
     for num in stst_uf:

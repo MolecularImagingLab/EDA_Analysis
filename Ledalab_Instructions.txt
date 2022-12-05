@@ -2,8 +2,9 @@
 1. Go to Documents/ledalab-master in matlab, type ledalab in command line
 2. Import SCR .txt file (type 3 file in ledalab), enter SC data col=1, event marker col=None, enter sample HZ of 200
 3. Downsample to 50 HZ
-4. File>Import events>Load new event Markers and delete existing ones. Should equal to roughly 144 events (may be missing or additional start/stop)
+4. File>Import events>Load new event Markers and delete existing ones. Should equal to roughly 144 events (may be missing start/stop but should not have more than 144 events)
+**Before JUNE 2021, there are 140 events.
 5. Clean data: Preprocessing>Artifact correction for any noise
 6. Select Continuous decomposition analysis
-7. Results>Export Event-Related Activation>SCR window:1-4 (eq. to stim dur)
+7. Results>Export Event-Related Activation>SCR window:3-10 (eq. to stim dur + min. ITI)
 8. Save .mat file for later use
