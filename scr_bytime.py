@@ -8,18 +8,17 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import seaborn as sns
 
-def import_scr(root, exclude):
+def import_scr(root):
     path = root
     all_files = glob.glob(os.path.join(path, "*era.txt"))
     # Remove those not included in analysis
-    exclude = exclude
-    all_filesf = [f for f in all_files if exclude not in f]
-    print('Number of subjects:', len(all_filesf))
+    # all_filesf = [f for f in all_files if exclude not in f]
+    print('Number of subjects:', len(all_files))
     # Read in files
     dfs = []
-    for file in all_filesf:
+    for file in all_files:
         dfs.append(pd.read_csv(file, delim_whitespace=True))
-    return dfs
+    return dfs, all_files
 
 def extract_scr(dfs, var):
     #CDA.PhasicMax equal to maximum value of phasic activity [muS]
@@ -41,7 +40,7 @@ def extract_scr(dfs, var):
         ev_n_csps.append(ev_n)
         return csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps
 
-def process_scr(sm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps):
+def process_scr(csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps, all_files):
     # By Event, run 1: 0:14, run 2: 14:28, run 3: 28:42, run 4: 42:56
     #6 CSPS, #14 CSP, #14 CSM
     # Create column names
@@ -128,15 +127,14 @@ def plot_scr(allmelt, dpath):
 
 def main():
     # Hardcoded file path to existing BIDS dataset
-    root = '/Users/ramihamati/Documents/PhD_Work/AVL/SCR/syncedpars'
+    root = '/Users/ramihamati/Documents/PhD_Work/AVL/SCR/**/**'
     dpath = '/Users/ramihamati/Downloads'
-    exclude = 'AVL-001'
     # select variable of interest
-    var = 'CDA.PhasicMax'
+    var = 'CDA.ISCR'
     # Execute functions
-    dfs = import_scr(root, exclude)
+    dfs, all_files = import_scr(root)
     csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps = extract_scr(dfs, var)
-    allmelt = process_scr(sm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps)
+    allmelt = process_scr(csm_all, ev_n_csm, csp_all, ev_n_csp, csps_all, ev_n_csps, all_files)
     plot_scr(allmelt, dpath)
 if __name__ == "__main__":
 # execute only if run as a script

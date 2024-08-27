@@ -13,14 +13,16 @@ def grab_scr(root, scrpath):
     files = os.listdir(filefolder)
     files = [f for f in files if 'era' not in f]
     for f in files:
+        # FC.txt for AVLRAC to filter out baseline recordings
         if f.endswith('.txt'):
             results = f
+    print(results)
     return results, subject_id
 
 def assign_time(root, subject_id, scrpath, results):
     ''' Adds time variable based on sampling rate of 200 Hz. '''
     scr = pd.read_table(os.path.join(root,scrpath,subject_id,results), header=0,
-    names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True, encoding=None)
+    names=['microsiemens', 'stst', 'csps', 'csp', 'csm'], delim_whitespace=True)
     scr = scr.assign(time=[0 + (0.005)*i for i in range(len(scr))])[['time'] + scr.columns.tolist()]
     return scr
 
